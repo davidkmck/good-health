@@ -1,31 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"> 
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Good Health</title>
     <style>
         :root { 
             --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --dim: #64748b;
-            /* Dynamic HSL for Diet (Orange) and Exercise (Blue) */
             --diet-h: 25; --exer-h: 200;
             --active-h: var(--diet-h); --active-s: 10%; --active-l: 20%;
             --accent: hsl(var(--active-h), var(--active-s), var(--active-l));
         }
         body { background: var(--bg); color: var(--text); font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; margin: 0; min-height: 100vh; transition: background 0.5s; }
-        
-        /* Toggle Switch */
         .tab-container { display: flex; background: var(--card); border-radius: 30px; padding: 5px; margin-bottom: 20px; width: 100%; max-width: 340px; box-sizing: border-box; }
         .tab { flex: 1; padding: 10px; text-align: center; border-radius: 25px; cursor: pointer; font-weight: bold; transition: 0.3s; color: var(--dim); }
         .tab.active { background: var(--accent); color: white; }
-
         h1 { color: var(--accent); font-weight: 300; letter-spacing: 2px; text-transform: uppercase; margin: 10px 0; transition: color 0.5s; }
         .entry-box { background: var(--card); padding: 30px; border-radius: 24px; text-align: center; width: 100%; max-width: 340px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); box-sizing: border-box; }
         .score-display { font-size: 4rem; font-weight: bold; color: var(--accent); transition: color 0.5s; }
-        
+        #status { color: var(--dim); font-size: 0.9rem; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; height: 20px; margin-top: -5px; }
         .slider { -webkit-appearance: none; width: 100%; height: 12px; border-radius: 6px; background: #334155; outline: none; margin: 25px 0; }
         .slider::-webkit-slider-thumb { -webkit-appearance: none; width: 32px; height: 32px; border-radius: 50%; background: var(--accent); cursor: pointer; border: 4px solid var(--bg); transition: background 0.5s; }
-        
         .calendar-container { width: 100%; max-width: 340px; margin-top: 30px; background: var(--card); padding: 15px; border-radius: 20px; box-sizing: border-box; }
         .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
         .day-label { font-size: 0.7rem; color: var(--dim); text-align: center; margin-bottom: 5px; }
@@ -46,14 +41,14 @@
 
     <div class="entry-box">
         <div id="scoreDisplay" class="score-display">5</div>
-        <div id="status" style="color: var(--dim); font-size: 0.8rem;">Adjust to rate</div>
+        <div id="status">Average</div>
         <input type="range" min="0" max="10" value="5" class="slider" id="scoreSlider">
     </div>
 
     <div class="calendar-container">
         <div class="grid" id="calendarGrid">
             <div class="day-label">S</div><div class="day-label">M</div><div class="day-label">T</div>
-            <div class="day-label">W</div><div class="day-label">T</div><div class="day-label">F</div><div class="day-label">S</div>
+            <div class="day-label">W</div><div class="day-label">T</div><div class="day-label">F</div><div class="day-label = "S">S</div>
         </div>
     </div>
 
@@ -61,16 +56,26 @@
         const getDateKey = () => new Date().toLocaleDateString('en-CA');
         const slider = document.getElementById('scoreSlider');
         const display = document.getElementById('scoreDisplay');
+        const status = document.getElementById('status');
         const modeTitle = document.getElementById('modeTitle');
-        let mode = 'diet'; // 'diet' or 'exercise'
+        let mode = 'diet';
         let healthData = JSON.parse(localStorage.getItem('healthData')) || { diet: {}, exercise: {} };
         const today = getDateKey();
+
+        const labelMap = {
+            0: "Poor", 1: "Poor",
+            2: "Struggling", 3: "Struggling",
+            4: "Average", 5: "Average",
+            6: "Good", 7: "Good",
+            8: "Great", 9: "Great",
+            10: "Excellent"
+        };
 
         function setMode(newMode) {
             mode = newMode;
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.getElementById(mode === 'diet' ? 'tabDiet' : 'tabExer').classList.add('active');
-            modeTitle.innerText = mode.charAt(0).toUpperCase() + mode.slice(1);
+            modeTitle.innerText = mode.toUpperCase();
             
             const currentVal = healthData[mode][today] !== undefined ? healthData[mode][today] : 5;
             slider.value = currentVal;
@@ -81,14 +86,13 @@
 
         function updateUI(val) {
             val = parseInt(val);
-            const hue = mode === 'diet' ? 25 : 200; // Orange vs Blue
+            status.innerText = labelMap[val];
+            const hue = mode === 'diet' ? 25 : 200;
             
-            // Background gloom/vibrancy logic
             const bgS = 5 + (val * 4); 
             const bgL = 2 + (val * 1.2); 
             document.body.style.backgroundColor = `hsl(${hue}, ${bgS}%, ${bgL}%)`;
 
-            // Accent vibrancy logic
             const accS = 10 + (val * 8); 
             const accL = 20 + (val * 3); 
             document.documentElement.style.setProperty('--active-h', hue);
@@ -107,9 +111,9 @@
 
         function renderCalendar() {
             const grid = document.getElementById('calendarGrid');
-            const labels = Array.from(grid.querySelectorAll('.day-label'));
+            const labelsGrid = Array.from(grid.querySelectorAll('.day-label'));
             grid.innerHTML = '';
-            labels.forEach(l => grid.appendChild(l));
+            labelsGrid.forEach(l => grid.appendChild(l));
 
             const now = new Date();
             const year = now.getFullYear();
